@@ -15,7 +15,7 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name="Post",
+            name="PerfilUsuario",
             fields=[
                 (
                     "id",
@@ -26,26 +26,19 @@ class Migration(migrations.Migration):
                         verbose_name="ID",
                     ),
                 ),
-                ("titulo", models.CharField(max_length=150)),
-                ("slug", models.SlugField(blank=True, max_length=170, unique=True)),
-                ("contenido", models.TextField()),
+                ("bio", models.CharField(blank=True, max_length=200)),
                 (
-                    "imagen",
-                    models.ImageField(blank=True, null=True, upload_to="posts/"),
+                    "avatar",
+                    models.ImageField(blank=True, null=True, upload_to="avatares/"),
                 ),
-                ("fecha_creacion", models.DateTimeField(auto_now_add=True)),
-                ("fecha_actualizacion", models.DateTimeField(auto_now=True)),
                 (
-                    "autor",
-                    models.ForeignKey(
+                    "user",
+                    models.OneToOneField(
                         on_delete=django.db.models.deletion.CASCADE,
-                        related_name="posts",
+                        related_name="perfil",
                         to=settings.AUTH_USER_MODEL,
                     ),
                 ),
             ],
-            options={
-                "ordering": ["-fecha_creacion"],
-            },
         ),
     ]

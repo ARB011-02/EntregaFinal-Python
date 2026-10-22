@@ -1,79 +1,39 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.db.models import Q
-from django.http import HttpResponseForbidden
-from django.shortcuts import get_object_or_404, redirect, render
+from django.shortcuts import redirect, render
 
-from .forms import PostForm
-from .models import Post
+from .forms import PerfilUsuarioForm, RegistroForm
+from .models import PerfilUsuario
 
 
-def listado_posts(request):
-    posts = Post.objects.select_related("autor").all()
-    return render(request, "posts/listado_posts.html", {"posts": posts})
-
-
-def detalle_post(request, slug):
-    post = get_object_or_404(Post, slug=slug)
-    return render(request, "posts/detalle_post.html", {"post": post})
-
-
-def buscar_posts(request):
-    query = request.GET.get("q", "").strip()
-    resultados = []
-    if query:
-        resultados = Post.objects.filter(
-            Q(titulo__icontains=query) | Q(contenido__icontains=query)
-        )
-    return render(
-        request, "posts/buscar_posts.html", {"query": query, "resultados": resultados}
-    )
-
-
-@login_required
-def crear_post(request):
+def registro(request):
     if request.method == "POST":
-        form = PostForm(request.POST, request.FILES)
+        form = RegistroForm(request.POST)
         if form.is_valid():
-            post = form.save(commit=False)
-            post.autor = request.user
-            post.save()
-            messages.success(request, "Post publicado correctamente.")
-            return redirect("detalle_post", slug=post.slug)
+            user = form.save()
+            PerfilUsuario.objects.create(user=user)
+            messages.success(request, "Cuenta creada. Ya podés iniciar sesión.")
+            return redirect("login")
     else:
-        form = PostForm()
-    return render(
-        request, "posts/post_form.html", {"form": form, "titulo_pagina": "Nuevo post"}
-    )
+        form = RegistroForm()
+    return render(request, "usuarios/registro.html", {"form": form})
 
 
 @login_required
-def editar_post(request, slug):
-    post = get_object_or_404(Post, slug=slug)
-    if post.autor != request.user:
-        return HttpResponseForbidden("No tenés permiso para editar este post: no sos el autor.")
+def perfil(request):
+    perfil_usuario, _creado = PerfilUsuario.objects.get_or_create(user=request.user)
+    return render(request, "usuarios/perfil.html", {"perfil": perfil_usuario})
+
+
+@login_required
+def editar_perfil(request):
+    perfil_usuario, _creado = PerfilUsuario.objects.get_or_create(user=request.user)
     if request.method == "POST":
-        form = PostForm(request.POST, request.FILES, instance=post)
+        form = PerfilUsuarioForm(request.POST, request.FILES, instance=perfil_usuario)
         if form.is_valid():
             form.save()
-            messages.success(request, "Post actualizado correctamente.")
-            return redirect("detalle_post", slug=post.slug)
+            messages.success(request, "Perfil actualizado.")
+            return redirect("perfil")
     else:
-        form = PostForm(instance=post)
-    return render(
-        request,
-        "posts/post_form.html",
-        {"form": form, "titulo_pagina": "Editar post", "post": post},
-    )
-
-
-@login_required
-def eliminar_post(request, slug):
-    post = get_object_or_404(Post, slug=slug)
-    if post.autor != request.user:
-        return HttpResponseForbidden("No tenés permiso para eliminar este post: no sos el autor.")
-    if request.method == "POST":
-        post.delete()
-        messages.success(request, "Post eliminado.")
-        return redirect("listado_posts")
-    return render(request, "posts/post_confirmar_borrado.html", {"post": post})
+        form = PerfilUsuarioForm(instance=perfil_usuario)
+    return render(request, "usuarios/editar_perfil.html", {"form": form})
