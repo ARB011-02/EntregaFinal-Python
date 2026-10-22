@@ -1,13 +1,12 @@
-from django.conf import settings
-from django.conf.urls.static import static
-from django.contrib import admin
-from django.urls import include, path
+from django.urls import path
+
+from . import views
 
 urlpatterns = [
-    path("admin/", admin.site.urls),
-    path("", include("posts.urls")),
-    path("usuarios/", include("usuarios.urls")),
+    path("", views.listado_posts, name="listado_posts"),
+    path("buscar/", views.buscar_posts, name="buscar_posts"),
+    path("nuevo/", views.crear_post, name="crear_post"),
+    path("<slug:slug>/", views.detalle_post, name="detalle_post"),
+    path("<slug:slug>/editar/", views.editar_post, name="editar_post"),
+    path("<slug:slug>/eliminar/", views.eliminar_post, name="eliminar_post"),
 ]
-
-if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
